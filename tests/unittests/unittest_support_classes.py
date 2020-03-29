@@ -69,8 +69,8 @@ class TestProperties:
             n = 500
             n_infected = 10
             n_days = 30
-            contacts = 5
-            beta = 0.2
+            contacts = 3
+            beta = 0.4
             serial = 2
             serial_std = 0.5
             dur = 3
@@ -189,6 +189,14 @@ class CovaSimTest(unittest.TestCase):
         self.set_simulation_parameters(microsim_parameters)
         pass
 
+    def set_everyone_infected(self, agent_count=1000):
+        Simkeys = TestProperties.ParameterKeys.SimulationKeys
+        everyone_infected = {
+            Simkeys.number_agents: agent_count,
+            Simkeys.initial_infected_count: agent_count
+        }
+        self.set_simulation_parameters(params_dict=everyone_infected)
+
     def set_smallpop_hightransmission(self):
         """
         Creates a small population with lots of transmission
@@ -265,12 +273,27 @@ class TestSupportTests(CovaSimTest):
                          microsimParams.n_infected)
         pass
 
-    def test_run_small_higtransmission_sim(self):
+    def test_everyone_infected(self):
+        """
+        All agents start infected
+        """
+        self.is_debugging = True
+
+        total_agents = 500
+        self.set_everyone_infected(agent_count=total_agents)
+        self.run_sim()
+        exposed_channel = TestProperties.ResultsDataKeys.exposed_at_timestep
+        day_0_exposed = self.get_day_zero_channel_value(exposed_channel)
+        self.assertEqual(day_0_exposed, total_agents)
+        pass
+
+    def test_run_small_hightransmission_sim(self):
         """
         Runs a small simulation with lots of transmission
         Verifies that there are lots of infections in
         a short time.
         """
+        self.is_debugging = True
         self.assertIsNone(self.simulation_parameters)
         self.assertIsNone(self.sim)
         self.set_smallpop_hightransmission()
@@ -291,7 +314,7 @@ class TestSupportTests(CovaSimTest):
             prev_exposed = today_exposed
             pass
         infectious_channel = self.get_full_result_channel(
-            TestProperties.ResultsDataKeys.infectious_at_timestep
+            TestProperties.ResultsDataKeys.infections_at_timestep
         )
         prev_infectious = infectious_channel[1]
         for t in range(2, 10):
