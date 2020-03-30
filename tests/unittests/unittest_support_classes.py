@@ -55,7 +55,9 @@ class TestProperties:
             time_to_death = 'timetodie'
             time_to_death_std = 'timetodie_std'
             use_cfr_by_age = 'prog_by_age'
-            default_cfr = 'default_death_prob'
+            prob_severe_death = 'default_death_prob'
+            prob_symptomatic_severe = 'default_severe_prob'
+            prob_infected_symptomatic = 'default_symp_prob'
             pass
         pass
     class SpecializedSimulations:
@@ -196,6 +198,41 @@ class CovaSimTest(unittest.TestCase):
             Simkeys.initial_infected_count: agent_count
         }
         self.set_simulation_parameters(params_dict=everyone_infected)
+        pass
+
+    def set_everyone_infectious_same_day(self, num_agents, days_to_infectious=1, num_days=60):
+        """
+        Args:
+            num_agents: number of agents to create and infect
+            days_to_infectious: days until all agents are infectious (1)
+            num_days: days to simulate (60)
+        """
+        self.set_everyone_infected(agent_count=num_agents)
+        test_config = {
+            TestProperties.ParameterKeys.SimulationKeys.number_simulated_days: num_days,
+            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious: days_to_infectious,
+            TestProperties.ParameterKeys.ProgressionKeys.exposed_to_infectious_std: 0,
+            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
+            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 0
+        }
+        self.set_simulation_parameters(params_dict=test_config)
+        pass
+
+    def set_everyone_is_going_to_die(self, num_agents):
+        """
+        Cause all agents in the simulation to begin infected and die.
+        Args:
+            num_agents: Number of agents to simulate
+        """
+        self.set_everyone_infectious_same_day(num_agents=num_agents)
+        everyone_dying_config = {
+            TestProperties.ParameterKeys.MortalityKeys.use_cfr_by_age: False,
+            TestProperties.ParameterKeys.MortalityKeys.prob_infected_symptomatic: 1,  # Uh oh
+            TestProperties.ParameterKeys.MortalityKeys.prob_symptomatic_severe: 1,  # Oh no
+            TestProperties.ParameterKeys.MortalityKeys.prob_severe_death: 1,  # No recoveries
+        }
+        self.set_simulation_parameters(params_dict=everyone_dying_config)
+        pass
 
     def set_smallpop_hightransmission(self):
         """
